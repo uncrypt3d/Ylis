@@ -1,6 +1,6 @@
 # Ylis
 Ylilauta lisäosa.
-Prj_name; KelaGold
+#Prj_name; KelaGold
 
 Tämän hetkiset toiminnot;
 Poistaa "kultatili" pakotukset,
