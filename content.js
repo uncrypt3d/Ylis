@@ -69,6 +69,7 @@ function scrollToBottom() {
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
 }
 
+//väriscripti
 function applyPostHighlighting() {
     const baseURL = 'https://ylilauta.org/sodat/';
     
@@ -95,3 +96,66 @@ function applyPostHighlighting() {
 }
 
 applyPostHighlighting();
+
+
+//hidelista
+function hideUsers(ids) {
+    ids.forEach(id => {
+      const elements = document.querySelectorAll(`[data-action="Thread.hideUser"][data-user-id="${id}"]`);
+      
+      if (elements.length === 0) {
+        console.log(`No elements found to hide for ID ${id}`);
+      }
+  
+      elements.forEach(element => {
+        console.log(`Attempting to hide user with ID ${id}`);
+        if (element.tagName.toLowerCase() === 'button') {
+          element.click();
+        } else {
+          console.log(`Element with ID ${id} is not a button`);
+        }
+      });
+    });
+  }
+  
+function hidePosts(ids) {
+    document.querySelectorAll('.post').forEach(post => {
+     
+      const userId = post.getAttribute('data-user-id');
+  
+      if (userId && ids.includes(userId)) {
+        console.log(`Hiding post with user ID ${userId}`);
+        post.style.display = 'none'; 
+      }
+    });
+  }
+  
+
+  if (window.location.pathname.includes('/sodat/')) {
+    (function() {
+      const regex = /^#HIDELISTA/;
+      
+      const postMessages = document.querySelectorAll('.post-message');
+      
+      let ids = [];
+      postMessages.forEach(message => {
+        if (regex.test(message.textContent)) {
+          const messageText = message.textContent;
+          
+          ids = Array.from(messageText.matchAll(/ID\s?([0-9]+)\s?/g)).map(r => r[1]);
+          console.log('IDs extracted:', ids);
+          
+          return;
+        }
+      });
+      
+      if (ids.length > 0) {
+        hidePosts(ids);
+      } else {
+        console.log('No matching message with IDs found');
+      }
+    })();
+  }
+  
+  
+  
