@@ -1,4 +1,3 @@
-// kultishuoracss
 function removeCSSRules() {
     const stylesheets = document.styleSheets;
 
@@ -11,7 +10,6 @@ function removeCSSRules() {
             for (let j = rules.length - 1; j >= 0; j--) {
                 const rule = rules[j].cssText;
 
-                // Match and remove specific rules
                 if (rule.includes("#navbar .button-gold-buy") ||
                     rule.includes("a.button-gold-buy") ||
                     rule.includes("a.button-gold-buy @media (max-width: 900px)")) {
@@ -30,7 +28,6 @@ removeCSSRules();
 const targetButtons = document.querySelectorAll('.button.button-gold-buy');
 
 targetButtons.forEach(buttonElement => {
-
     buttonElement.removeAttribute('onclick');
 
     if (buttonElement.tagName.toLowerCase() === 'a') {
