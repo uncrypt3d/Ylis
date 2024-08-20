@@ -6,10 +6,10 @@ Tämän hetkiset toiminnot;
 Poistaa "kultatili" pakotukset,
 Nappi sivun ylös & alas (osa kultatili pakotusta)
 
-< Saa keksiä uusia toimintoja - ja jos kannatat ideaa, anna sille viestille
->"Tää:D".
+Saa keksiä uusia toimintoja - ja jos kannatat ideaa, anna sille viestille
+"Tää:D".
 
-> Asennus;
+Asennus;
 (koska en ole maksanut $5 liittymismaksua, en saa tätä "storeen".)
  avaa github,
  lataa uusin versio,
