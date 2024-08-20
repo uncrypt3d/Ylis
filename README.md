@@ -9,9 +9,12 @@ Nappi sivun ylös & alas (osa kultatili pakotusta)
 
 "Väriscripti" /sodat/ alalaudalle. ( https://ylilauta.org/sodat/27hx3g#post-253816221 )
 
+"Hide" Scripti /sodat/ alalaudalle. ( https://ylilauta.org/sodat/27hhv8#post-253327490 )
+
 
 Saa keksiä uusia toimintoja - ja jos kannatat ideaa, anna sille viestille
 "Tää:D" -ääni Ylilaudan langassa;
+>https://ylilauta.org/satunnainen/27kgwc
 
 
 # Asennus;
