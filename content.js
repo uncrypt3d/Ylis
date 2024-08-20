@@ -72,27 +72,29 @@ function scrollToBottom() {
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
 }
 
-//function createDownloadButton(url) {
-   // const button = document.createElement('button');
-   // button.innerText = 'Download';
-   // button.style.padding = '10px';
-   // button.style.margin = '5px';
-   // button.style.backgroundColor = '#007BFF';
-   // button.style.color = '#fff';
-   // button.style.border = 'none';
-   // button.style.borderRadius = '5px';
-   // button.style.cursor = 'pointer';
-   // button.addEventListener('click', () => {
-   //     chrome.runtime.sendMessage({ action: 'download', url: url });
-   // });
-   // return button;
-//}
+function applyPostHighlighting() {
+    const baseURL = 'https://ylilauta.org/sodat/';
+    
+    if (window.location.href.startsWith(baseURL)) {
+        function highlightPosts() {
+            const config = { upvoteThreshold: 5 };
+            
+            function processPost(post) {
+                const upvoteElement = post.querySelector(".post-button .post-upvotes");
+                if (upvoteElement) {
+                    const upvoteCount = parseInt(upvoteElement.textContent);
+                    if (upvoteCount > config.upvoteThreshold) {
+                        post.style.border = "3px solid green";
+                        post.style.backgroundColor = "rgba(0, 255, 0, 0.1)";
+                    }
+                }
+            }
 
-//const mediaElements = document.querySelectorAll('video, audio');
-//mediaElements.forEach(media => {
-    //const src = media.src || media.querySelector('source')?.src;
-    //if (src) {
-      //  const downloadButton = createDownloadButton(src);
-       // media.parentElement.insertBefore(downloadButton, media.nextSibling);
-   // }
-//});
+            document.querySelectorAll(".post").forEach(processPost);
+        }
+
+        highlightPosts();
+    }
+}
+
+applyPostHighlighting();
