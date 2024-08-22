@@ -3,7 +3,7 @@
   "name": "KELA-GOLD",
   "version": "0.7.3",
   "description": "Golden Ylis addon.",
-  "permissions": ["activeTab", "scripting", "storage", "notifications", "alarms"],
+  "permissions": ["activeTab", "scripting", "storage", "notifications", "alarms", "tabs"],
   "action": {
     "default_popup": "popup.html"
   },
@@ -15,7 +15,11 @@
         "matches": ["*://ylilauta.org/*"],
         "js": ["content.js"]
       }
+    ],
+    "web_accessible_resources": [
+      {
+        "resources": ["updater.html"],
+        "matches": ["<all_urls>"]
+      }
     ]
   }
-  
-  
