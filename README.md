@@ -11,6 +11,8 @@ Nappi sivun ylös & alas (osa kultatili pakotusta)
 
 "Hide" Scripti /sodat/ alalaudalle. ( https://ylilauta.org/sodat/27hhv8#post-253327490 )
 
+Mahdollisuus nyt myös ON / OFF skripteille.
+
 
 Saa keksiä uusia toimintoja - ja jos kannatat ideaa, anna sille viestille
 "Tää:D" -ääni Ylilaudan langassa;
