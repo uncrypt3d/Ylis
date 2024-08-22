@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         toggleHighlightButton.textContent = highlightEnabled ? '>väriscripti pois' : '>>väriscripti päälle';
         toggleHideButton.textContent = hidePostsEnabled ? '>VENÄJÄ PROPAGANDA PÄÄLLE' : '>>VENÄJÄ PROPAGANDA POIS';
-        toggleShoutboxButton.textContent = shoutboxEnabled ? '>>Vittuiluboci päälle' : '>Pakotusboxi pois';
+        toggleShoutboxButton.textContent = shoutboxEnabled ? '>>Vittuiluboxi päälle' : '>Pakotusboxi pois';
 
         toggleHighlightButton.addEventListener('click', () => {
             const newHighlightEnabled = !highlightEnabled;
@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
         toggleShoutboxButton.addEventListener('click', () => {
             const newShoutboxEnabled = !shoutboxEnabled;
             chrome.storage.local.set({ shoutboxEnabled: newShoutboxEnabled }, function() {
-                toggleShoutboxButton.textContent = newShoutboxEnabled ? '>Vittuiluboci päälle' : '>>Pakotusboxi pois';
+                toggleShoutboxButton.textContent = newShoutboxEnabled ? '>Vittuiluboxi päälle' : '>>Pakotusboxi pois';
                 chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
                     chrome.tabs.sendMessage(tabs[0].id, {
                         type: 'TOGGLE_SHOUTBOX',
