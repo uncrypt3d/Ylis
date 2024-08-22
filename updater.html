@@ -9,40 +9,38 @@
       font-family: Arial, sans-serif;
       margin: 0;
       padding: 0;
-      background: url('background.jpg') no-repeat center center fixed;
-      background-size: cover;
-      color: #fff;
+      background-color: #2e2e2e;
+      color: #333;
       text-align: center;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
     }
-
     .container {
-      background: rgba(0, 0, 0, 0.8);
-      border-radius: 8px;
-      padding: 20px;
-      max-width: 400px;
-      width: 100%;
+        background: url('background.jpg') no-repeat center center;
+        background-size: cover;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        max-width: 400px;
+        width: 100%;
+        color: #ffffff; /* Ensure text is readable on the background */
     }
-
     h1 {
       margin: 0;
       font-size: 24px;
+      color: #889200;
     }
-
     p {
       font-size: 16px;
       margin: 10px 0;
     }
-
     .buttons {
       display: flex;
       justify-content: space-between;
       margin-top: 20px;
     }
-
     button {
       background: #007bff;
       border: none;
@@ -53,15 +51,12 @@
       cursor: pointer;
       transition: background 0.3s ease;
     }
-
     button:hover {
       background: #0056b3;
     }
-
     .later {
       background: #6c757d;
     }
-
     .later:hover {
       background: #5a6268;
     }
@@ -69,7 +64,8 @@
 </head>
 <body>
   <div class="container">
-    <h1>Update Available!</h1>
+    <h1>KELA gold</h1>
+    <h2>Update Available!</h2>
     <p>Version <span id="latest-version"></span> is now available. Do you want to update?</p>
     <div class="buttons">
         <button id="update-button">Update Now</button>
