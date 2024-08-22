@@ -4,43 +4,84 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gold Sponsored by Kela.</title>
-  <link rel="stylesheet" href="styles.css">
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+    
     body {
-      width: 320px;
-      font-family: Arial, sans-serif;
+      width: 480px;
+      height: 280px;
+      font-family: 'Orbitron', sans-serif;
       margin: 0;
       padding: 0;
-      color:rgb(207, 253, 0);
+      color: #ffffff;
+      background-image: url("/background.jpg");
+      background-repeat: no-repeat;
+      background-size: cover;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(10px);
     }
-    button {
+
+    h2, b {
+      color: #00ffc3;
+      text-shadow: 0 0 5px rgba(0, 255, 195, 0.7);
+    }
+
+    .popup-container {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      text-align: center;
       width: 100%;
-      padding: 10px;
-      border: none;
-      background-color: #484849;
-      color: rgb(0, 0, 0);
-      font-size: 16px;
-      cursor: pointer;
-      margin-bottom: 5px;
-      border-radius: 5px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-      transition: background-color 0.3s, box-shadow 0.3s;
+      max-width: 400px;
     }
+
+    button {
+      width: 90%;
+      padding: 15px;
+      margin: 10px 0;
+      border: none;
+      background: linear-gradient(45deg, #00ffc3, #0056b3);
+      color: #000;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0, 255, 195, 0.4), 0 0 10px rgba(0, 86, 179, 0.4);
+      transition: transform 0.3s, box-shadow 0.3s, background 0.3s;
+    }
+
+    button.active {
+      background: linear-gradient(45deg, #0056b3, #ff004c);
+    }
+
     button:hover {
-      background-color: #0056b3;
-      box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+      transform: translateY(-5px);
+      box-shadow: 0 6px 20px rgba(0, 255, 195, 0.6), 0 0 15px rgba(0, 86, 179, 0.6);
+    }
+
+    hr {
+      border: 0;
+      height: 1px;
+      background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.5), transparent);
+      margin: 20px 0;
     }
   </style>
 </head>
 <body>
-    <center><h2><i>KELA-(gold)</i></h2></center>
-    <center><p>Kultatili pakotus - Kela auttaa.</p></center>
   <div class="popup-container">
+    <h2>KELA-gold</h2>
+    <i>"Kultatili pakotus - Kela auttaa."</i>
     <hr>
-    <button id="scrollToTop">**YLÖS</button>
-    <button id="scrollToBottom">ALAS**</button>>
+    <button id="toggleHighlight"></button>
+    <button id="toggleHide"></button>
     <hr>
-    <center><b>by Anon's, Legion</b></center>
+    <i> by Anon's , Legion.</i>
   </div>
   <script src="popup.js"></script>
 </body>
