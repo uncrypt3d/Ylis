@@ -1,7 +1,84 @@
+//content.js
 //'asetukset'
 let highlightEnabled = true;
 let hidePostsEnabled = true;
+let shoutboxEnabled = true;
 let postIds = [];
+
+
+
+
+//scriptit
+
+
+function enableShoutbox() {
+    const elements = ['#shoutbox', '#shouts', '#shout-form'];
+    elements.forEach(selector => {
+        const element = document.querySelector(selector);
+        if (element) {
+            element.style.display = 'none';
+        }
+    });
+    console.log('Shoutbox hidden');
+}
+
+function disableShoutbox() {
+    const elements = ['#shoutbox', '#shouts', '#shout-form'];
+    elements.forEach(selector => {
+        const element = document.querySelector(selector);
+        if (element) {
+            element.style.display = '';
+        }
+    });
+    console.log('Shoutbox displayed');
+}
+
+function hidePosts(ids) {
+    document.querySelectorAll('.post').forEach(post => {
+        const userId = post.getAttribute('data-user-id');
+        if (userId && ids.includes(userId)) {
+            post.style.display = 'none';
+        }
+    });
+    console.log('Posts hidden');
+}
+
+function showPosts(ids) {
+    document.querySelectorAll('.post').forEach(post => {
+        const userId = post.getAttribute('data-user-id');
+        if (userId && ids.includes(userId)) {
+            post.style.display = '';
+        }
+    });
+    console.log('Posts shown');
+}
+
+function applyPostHighlighting() {
+    const baseURL = 'https://ylilauta.org/sodat/';
+    if (window.location.href.startsWith(baseURL)) {
+        const config = { upvoteThreshold: 5 };
+        function processPost(post) {
+            const upvoteElement = post.querySelector(".post-button .post-upvotes");
+            if (upvoteElement) {
+                const upvoteCount = parseInt(upvoteElement.textContent);
+                if (upvoteCount > config.upvoteThreshold) {
+                    post.style.border = "3px solid green";
+                    post.style.backgroundColor = "rgba(0, 255, 0, 0.1)";
+                }
+            }
+        }
+        document.querySelectorAll(".post").forEach(processPost);
+    }
+    console.log('Highlighting enabled');
+}
+
+function removePostHighlighting() {
+    document.querySelectorAll(".post").forEach(post => {
+        post.style.border = '';
+        post.style.backgroundColor = '';
+    });
+    console.log('Highlighting disabled');
+}
 
 function removeCSSRules() {
     const stylesheets = document.styleSheets;
@@ -74,58 +151,10 @@ function scrollToBottom() {
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
 }
 
-function applyPostHighlighting() {
-    const baseURL = 'https://ylilauta.org/sodat/';
-
-    if (window.location.href.startsWith(baseURL)) {
-        const config = { upvoteThreshold: 5 };
-
-        function processPost(post) {
-            const upvoteElement = post.querySelector(".post-button .post-upvotes");
-            if (upvoteElement) {
-                const upvoteCount = parseInt(upvoteElement.textContent);
-                if (upvoteCount > config.upvoteThreshold) {
-                    post.style.border = "3px solid green";
-                    post.style.backgroundColor = "rgba(0, 255, 0, 0.1)";
-                }
-            }
-        }
-
-        document.querySelectorAll(".post").forEach(processPost);
-    }
-    console.log('Highlighting enabled');
-}
-
-function removePostHighlighting() {
-    document.querySelectorAll(".post").forEach(post => {
-        post.style.border = '';
-        post.style.backgroundColor = '';
-    });
-    console.log('Highlighting disabled');
-}
-
-function hidePosts(ids) {
-    document.querySelectorAll('.post').forEach(post => {
-        const userId = post.getAttribute('data-user-id');
-        if (userId && ids.includes(userId)) {
-            post.style.display = 'none';
-        }
-    });
-    console.log('Posts hidden');
-}
-
-function showPosts(ids) {
-    document.querySelectorAll('.post').forEach(post => {
-        const userId = post.getAttribute('data-user-id');
-        if (userId && ids.includes(userId)) {
-            post.style.display = '';
-        }
-    });
-    console.log('Posts shown');
-}
-chrome.storage.local.get(['highlightEnabled', 'hidePostsEnabled', 'postIds'], function(data) {
+chrome.storage.local.get(['highlightEnabled', 'hidePostsEnabled', 'shoutboxEnabled', 'postIds'], function(data) {
     highlightEnabled = data.highlightEnabled !== undefined ? data.highlightEnabled : true;
     hidePostsEnabled = data.hidePostsEnabled !== undefined ? data.hidePostsEnabled : true;
+    shoutboxEnabled = data.shoutboxEnabled !== undefined ? data.shoutboxEnabled : true;
     postIds = data.postIds || [];
 
     if (highlightEnabled) {
@@ -134,30 +163,27 @@ chrome.storage.local.get(['highlightEnabled', 'hidePostsEnabled', 'postIds'], fu
     if (hidePostsEnabled) {
         hidePosts(postIds);
     }
+    if (shoutboxEnabled) {
+        enableShoutbox();
+    } else {
+        disableShoutbox();
+    }
 });
 
-// #HIDELISTA
 if (window.location.pathname.includes('/sodat/')) {
     (function() {
         const regex = /^#HIDELISTA/;
-        
         const postMessages = document.querySelectorAll('.post-message');
-        
         let ids = [];
         postMessages.forEach(message => {
             if (regex.test(message.textContent)) {
                 const messageText = message.textContent;
-                
                 ids = Array.from(messageText.matchAll(/ID\s?([0-9]+)\s?/g)).map(r => r[1]);
                 console.log('IDs extracted:', ids);
-                
-                // Update post IDs
                 chrome.storage.local.set({ postIds: ids });
-                
                 return;
             }
         });
-        
         if (ids.length > 0) {
             hidePosts(ids);
         } else {
@@ -194,5 +220,15 @@ chrome.runtime.onMessage.addListener(debounce((request, sender, sendResponse) =>
             showPosts(postIds);
         }
         chrome.storage.local.set({ hidePostsEnabled, postIds });
+    }
+
+    if (request.type === 'TOGGLE_SHOUTBOX') {
+        shoutboxEnabled = request.enable;
+        if (shoutboxEnabled) {
+            enableShoutbox();
+        } else {
+            disableShoutbox();
+        }
+        chrome.storage.local.set({ shoutboxEnabled });
     }
 }, 300));
