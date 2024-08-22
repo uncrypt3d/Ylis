@@ -3,15 +3,20 @@ Ylilauta lisäosa.
 
 Tämän hetkiset toiminnot;
 
-Poistaa "kultatili" pakotukset,
+>Poistaa "kultatili" pakotukset,
 
-Nappi sivun ylös & alas (osa kultatili pakotusta)
+>Nappi sivun ylös & alas (osa kultatili pakotusta)
 
-"Väriscripti" /sodat/ alalaudalle. ( https://ylilauta.org/sodat/27hx3g#post-253816221 )
+>"Väriscripti" /sodat/ alalaudalle. ( https://ylilauta.org/sodat/27hx3g#post-253816221 )
 
-"Hide" Scripti /sodat/ alalaudalle. ( https://ylilauta.org/sodat/27hhv8#post-253327490 )
+>"Hide" Scripti /sodat/ alalaudalle. ( https://ylilauta.org/sodat/27hhv8#post-253327490 )
 
-Mahdollisuus nyt myös ON / OFF skripteille.
+>Mahdollisuus nyt myös ON / OFF skripteille.
+
+>"Automaattinen" päivityksien tarkastus (esim. hotfixeille - sekä uudistuksille.)
+
+>Shoutbox disable / enable.
+
 
 
 Saa keksiä uusia toimintoja - ja jos kannatat ideaa, anna sille viestille
