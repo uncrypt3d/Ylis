@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const toggleHighlightButton = document.getElementById('toggleHighlight');
     const toggleHideButton = document.getElementById('toggleHide');
     const toggleShoutboxButton = document.getElementById('toggleShoutbox');
+    
 
     chrome.storage.local.get(['highlightEnabled', 'hidePostsEnabled', 'shoutboxEnabled', 'postIds'], function(data) {
         const highlightEnabled = data.highlightEnabled !== undefined ? data.highlightEnabled : true;

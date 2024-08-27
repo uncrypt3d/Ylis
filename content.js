@@ -4,12 +4,9 @@ let highlightEnabled = true;
 let hidePostsEnabled = true;
 let shoutboxEnabled = true;
 let postIds = [];
-
-
-
+let fakePostIds = [];
 
 //scriptit
-
 
 function enableShoutbox() {
     const elements = ['#shoutbox', '#shouts', '#shout-form'];
@@ -40,7 +37,7 @@ function hidePosts(ids) {
             post.style.display = 'none';
         }
     });
-    console.log('Posts hidden');
+    console.log('Posts hidden:', ids);
 }
 
 function showPosts(ids) {
@@ -50,7 +47,7 @@ function showPosts(ids) {
             post.style.display = '';
         }
     });
-    console.log('Posts shown');
+    console.log('Posts shown:', ids);
 }
 
 function applyPostHighlighting() {
@@ -151,11 +148,12 @@ function scrollToBottom() {
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
 }
 
-chrome.storage.local.get(['highlightEnabled', 'hidePostsEnabled', 'shoutboxEnabled', 'postIds'], function(data) {
+chrome.storage.local.get(['highlightEnabled', 'hidePostsEnabled', 'shoutboxEnabled', 'postIds', 'fakePostIds'], function(data) {
     highlightEnabled = data.highlightEnabled !== undefined ? data.highlightEnabled : true;
     hidePostsEnabled = data.hidePostsEnabled !== undefined ? data.hidePostsEnabled : true;
     shoutboxEnabled = data.shoutboxEnabled !== undefined ? data.shoutboxEnabled : true;
     postIds = data.postIds || [];
+    fakePostIds = data.fakePostIds || [];
 
     if (highlightEnabled) {
         applyPostHighlighting();
@@ -172,22 +170,42 @@ chrome.storage.local.get(['highlightEnabled', 'hidePostsEnabled', 'shoutboxEnabl
 
 if (window.location.pathname.includes('/sodat/')) {
     (function() {
+        const realHIDELISTAIndicators = ["#HIDELISTA", "HIDETYSOHJE:", "Hidettämisen avuksi:"];
         const regex = /^#HIDELISTA/;
         const postMessages = document.querySelectorAll('.post-message');
-        let ids = [];
+        let realIDs = [];
+        let fakeIDs = [];
+
         postMessages.forEach(message => {
-            if (regex.test(message.textContent)) {
-                const messageText = message.textContent;
-                ids = Array.from(messageText.matchAll(/ID\s?([0-9]+)\s?/g)).map(r => r[1]);
-                console.log('IDs extracted:', ids);
-                chrome.storage.local.set({ postIds: ids });
-                return;
+            const messageText = message.textContent.trim();
+
+            if (regex.test(messageText)) {
+                const isReal = realHIDELISTAIndicators.every(indicator => messageText.includes(indicator));
+
+                if (isReal) {
+                    realIDs = Array.from(messageText.matchAll(/ID\s?([0-9]+)\s?/g)).map(r => r[1]);
+                    console.log('Real //COMMUNICATION', realIDs);
+                    chrome.storage.local.set({ postIds: realIDs });
+                    hidePosts(realIDs);
+                } else {
+                    const postElement = message.closest('.post');
+                    if (postElement) {
+                        postElement.style.display = 'none';
+                        fakeIDs.push(postElement.getAttribute('data-user-id'));
+                    }
+                }
             }
         });
-        if (ids.length > 0) {
-            hidePosts(ids);
+
+        if (realIDs.length > 0) {
+            hidePosts(realIDs);
         } else {
-            console.log('No matching message with IDs found');
+            console.log('No real - gotta hide //COMMUNICATION');
+        }
+
+        if (fakeIDs.length > 0) {
+            chrome.storage.local.set({ fakePostIds: fakeIDs });
+            console.log('Def. Fake //COMMUNICATION', fakeIDs);
         }
     })();
 }

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "KELA-GOLD",
-  "version": "0.7.3",
+  "version": "0.7.4",
   "description": "Golden Ylis addon.",
   "permissions": ["activeTab", "scripting", "storage", "notifications", "alarms", "tabs"],
   "action": {

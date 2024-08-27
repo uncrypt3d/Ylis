@@ -1,3 +1,4 @@
+// added in 0.7.3
 document.addEventListener('DOMContentLoaded', function() {
     chrome.storage.local.get(['latestVersion', 'releaseUrl', 'skipUntil'], function(data) {
       const currentTime = Date.now();
