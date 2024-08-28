@@ -170,42 +170,39 @@ chrome.storage.local.get(['highlightEnabled', 'hidePostsEnabled', 'shoutboxEnabl
 
 if (window.location.pathname.includes('/sodat/')) {
     (function() {
-        const realHIDELISTAIndicators = ["#HIDELISTA", "HIDETYSOHJE:", "Hidettämisen avuksi:"];
         const regex = /^#HIDELISTA/;
         const postMessages = document.querySelectorAll('.post-message');
         let realIDs = [];
-        let fakeIDs = [];
+        const requiredTexts = ["HIDETYSOHJE:", "RYBO", "RYBOT", "HIDETTÄMISEN AVUKSI:", "OHJE:", "#RYBOLISTA"];
+        const realHIDELISTAs = [];
+        const fakeHIDELISTAs = [];
 
         postMessages.forEach(message => {
             const messageText = message.textContent.trim();
 
             if (regex.test(messageText)) {
-                const isReal = realHIDELISTAIndicators.every(indicator => messageText.includes(indicator));
+                const containsRequiredTexts = requiredTexts.some(text => messageText.includes(text));
+                const containsOnlyIDs = !containsRequiredTexts && /ID\s?\d+\s?/g.test(messageText);
 
-                if (isReal) {
-                    realIDs = Array.from(messageText.matchAll(/ID\s?([0-9]+)\s?/g)).map(r => r[1]);
-                    console.log('Real //COMMUNICATION', realIDs);
-                    chrome.storage.local.set({ postIds: realIDs });
-                    hidePosts(realIDs);
-                } else {
-                    const postElement = message.closest('.post');
-                    if (postElement) {
-                        postElement.style.display = 'none';
-                        fakeIDs.push(postElement.getAttribute('data-user-id'));
-                    }
+                if (containsRequiredTexts) {
+                    realHIDELISTAs.push(messageText);
+                } else if (containsOnlyIDs) {
+                    fakeHIDELISTAs.push(messageText);
                 }
             }
         });
 
-        if (realIDs.length > 0) {
+        if (realHIDELISTAs.length > 0) {
+            realIDs = realHIDELISTAs.flatMap(text => Array.from(text.matchAll(/ID\s?([0-9]+)\s?/g)).map(r => r[1]));
+            console.log('Real HIDELISTA detected:', realIDs);
+            chrome.storage.local.set({ postIds: realIDs });
             hidePosts(realIDs);
         } else {
-            console.log('No real - gotta hide //COMMUNICATION');
+            console.log('No real HIDELISTA found - No action taken - make real one?');
         }
 
-        if (fakeIDs.length > 0) {
-            chrome.storage.local.set({ fakePostIds: fakeIDs });
-            console.log('Def. Fake //COMMUNICATION', fakeIDs);
+        if (fakeHIDELISTAs.length > 0) {
+            console.log('Fake HIDELISTA detected:', fakeHIDELISTAs);
         }
     })();
 }
