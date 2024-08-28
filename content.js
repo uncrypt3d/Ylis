@@ -116,26 +116,22 @@ function replaceGoldBuyButtons() {
 
         newButtonElement.innerHTML = '';
 
-        newButtonElement.appendChild(createScrollButton('^', scrollToTop));
-        newButtonElement.appendChild(createScrollButton('v', scrollToBottom));
+        const buttonContainer = document.createElement('div');
+        buttonContainer.className = 'scroll-button-container';
+
+        buttonContainer.appendChild(createScrollButton('icon-enter-up2', scrollToTop, 'Ylös'));
+        buttonContainer.appendChild(createScrollButton('icon-enter-down2', scrollToBottom, 'Alas'));
+
+        newButtonElement.appendChild(buttonContainer);
     });
 }
 
 replaceGoldBuyButtons();
 
-function createScrollButton(symbol, scrollFunction) {
+function createScrollButton(iconClass, scrollFunction, title) {
     const button = document.createElement('button');
-    button.innerText = symbol;
-    button.style.cssText = `
-        padding: 10px;
-        margin: 5px;
-        font-size: 18px;
-        background-color: #333;
-        color: #fff;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-    `;
+    button.className = `scroll-button ${iconClass}`;
+    button.title = title;
     button.addEventListener('click', scrollFunction);
     return button;
 }
