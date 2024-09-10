@@ -157,6 +157,10 @@ function updateHidelistaCache() {
     const requiredTexts = ["HIDETYSOHJE:", "RYBO", "RYBOT", "HIDETTÄMISEN AVUKSI:", "OHJE:", "#RYBOLISTA"];
     const realHIDELISTAs = [];
 
+    chrome.storage.local.set({ postIds: [] }, function() {
+        console.log('HIDELISTA cache cleared.');
+    });
+
     postMessages.forEach(message => {
         const messageText = message.textContent.trim();
 
@@ -173,20 +177,9 @@ function updateHidelistaCache() {
     if (realHIDELISTAs.length > 0) {
         currentRealIDs = realHIDELISTAs.flatMap(text => Array.from(text.matchAll(/ID\s?([0-9]+)\s?/g)).map(r => r[1]));
         console.log('Current real HIDELISTA detected:', currentRealIDs);
-
-        chrome.storage.local.get('postIds', function(data) {
-            const cachedRealIDs = data.postIds || [];
-            const newIDs = currentRealIDs.filter(id => !cachedRealIDs.includes(id));
-
-            if (newIDs.length > 0) {
-                const updatedIDs = [...new Set([...cachedRealIDs, ...currentRealIDs])];
-                chrome.storage.local.set({ postIds: updatedIDs }, function() {
-                    console.log('New IDs found. HIDELISTA cache updated:', updatedIDs);
-                    hidePosts(updatedIDs);
-                });
-            } else {
-                console.log('No new IDs in HIDELISTA. Cache is up to date.');
-            }
+        chrome.storage.local.set({ postIds: currentRealIDs }, function() {
+            console.log('HIDELISTA cache updated:', currentRealIDs);
+            hidePosts(currentRealIDs);
         });
     } else {
         console.log('No real HIDELISTA found.');
