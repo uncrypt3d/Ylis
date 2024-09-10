@@ -1,4 +1,3 @@
-//content.js
 //'asetukset'
 let highlightEnabled = true;
 let hidePostsEnabled = true;
@@ -31,23 +30,31 @@ function disableShoutbox() {
 }
 
 function hidePosts(ids) {
-    document.querySelectorAll('.post').forEach(post => {
-        const userId = post.getAttribute('data-user-id');
-        if (userId && ids.includes(userId)) {
-            post.style.display = 'none';
-        }
-    });
-    console.log('Posts hidden:', ids);
+    if (window.location.pathname.includes('/sodat/')) {
+        document.querySelectorAll('.post').forEach(post => {
+            const userId = post.getAttribute('data-user-id');
+            if (userId && ids.includes(userId)) {
+                post.style.display = 'none';
+            }
+        });
+        console.log('Posts hidden:', ids);
+    } else {
+        console.log('Not on /sodat/ page, hidePosts skipped');
+    }
 }
 
 function showPosts(ids) {
-    document.querySelectorAll('.post').forEach(post => {
-        const userId = post.getAttribute('data-user-id');
-        if (userId && ids.includes(userId)) {
-            post.style.display = '';
-        }
-    });
-    console.log('Posts shown:', ids);
+    if (window.location.pathname.includes('/sodat/')) {
+        document.querySelectorAll('.post').forEach(post => {
+            const userId = post.getAttribute('data-user-id');
+            if (userId && ids.includes(userId)) {
+                post.style.display = '';
+            }
+        });
+        console.log('Posts shown:', ids);
+    } else {
+        console.log('Not on /sodat/ page, showPosts skipped');
+    }
 }
 
 function applyPostHighlighting() {
@@ -90,7 +97,6 @@ function removeCSSRules() {
                 if (rule.includes("#navbar .button-gold-buy") ||
                     rule.includes("a.button-gold-buy") ||
                     rule.includes("a.button-gold-buy @media (max-width: 900px)")) {
-                    
                     stylesheet.deleteRule(j);
                 }
             }
@@ -144,6 +150,49 @@ function scrollToBottom() {
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
 }
 
+function updateHidelistaCache() {
+    const regex = /^#HIDELISTA/;
+    const postMessages = document.querySelectorAll('.post-message');
+    let currentRealIDs = [];
+    const requiredTexts = ["HIDETYSOHJE:", "RYBO", "RYBOT", "HIDETTÄMISEN AVUKSI:", "OHJE:", "#RYBOLISTA"];
+    const realHIDELISTAs = [];
+
+    postMessages.forEach(message => {
+        const messageText = message.textContent.trim();
+
+        if (regex.test(messageText)) {
+            const containsRequiredTexts = requiredTexts.some(text => messageText.includes(text));
+            const containsOnlyIDs = !containsRequiredTexts && /ID\s?\d+\s?/g.test(messageText);
+
+            if (containsRequiredTexts) {
+                realHIDELISTAs.push(messageText);
+            }
+        }
+    });
+
+    if (realHIDELISTAs.length > 0) {
+        currentRealIDs = realHIDELISTAs.flatMap(text => Array.from(text.matchAll(/ID\s?([0-9]+)\s?/g)).map(r => r[1]));
+        console.log('Current real HIDELISTA detected:', currentRealIDs);
+
+        chrome.storage.local.get('postIds', function(data) {
+            const cachedRealIDs = data.postIds || [];
+            const newIDs = currentRealIDs.filter(id => !cachedRealIDs.includes(id));
+
+            if (newIDs.length > 0) {
+                const updatedIDs = [...new Set([...cachedRealIDs, ...currentRealIDs])];
+                chrome.storage.local.set({ postIds: updatedIDs }, function() {
+                    console.log('New IDs found. HIDELISTA cache updated:', updatedIDs);
+                    hidePosts(updatedIDs);
+                });
+            } else {
+                console.log('No new IDs in HIDELISTA. Cache is up to date.');
+            }
+        });
+    } else {
+        console.log('No real HIDELISTA found.');
+    }
+}
+
 chrome.storage.local.get(['highlightEnabled', 'hidePostsEnabled', 'shoutboxEnabled', 'postIds', 'fakePostIds'], function(data) {
     highlightEnabled = data.highlightEnabled !== undefined ? data.highlightEnabled : true;
     hidePostsEnabled = data.hidePostsEnabled !== undefined ? data.hidePostsEnabled : true;
@@ -154,9 +203,11 @@ chrome.storage.local.get(['highlightEnabled', 'hidePostsEnabled', 'shoutboxEnabl
     if (highlightEnabled) {
         applyPostHighlighting();
     }
-    if (hidePostsEnabled) {
+
+    if (hidePostsEnabled && window.location.pathname.includes('/sodat/')) {
         hidePosts(postIds);
     }
+
     if (shoutboxEnabled) {
         enableShoutbox();
     } else {
@@ -165,42 +216,7 @@ chrome.storage.local.get(['highlightEnabled', 'hidePostsEnabled', 'shoutboxEnabl
 });
 
 if (window.location.pathname.includes('/sodat/')) {
-    (function() {
-        const regex = /^#HIDELISTA/;
-        const postMessages = document.querySelectorAll('.post-message');
-        let realIDs = [];
-        const requiredTexts = ["HIDETYSOHJE:", "RYBO", "RYBOT", "HIDETTÄMISEN AVUKSI:", "OHJE:", "#RYBOLISTA"];
-        const realHIDELISTAs = [];
-        const fakeHIDELISTAs = [];
-
-        postMessages.forEach(message => {
-            const messageText = message.textContent.trim();
-
-            if (regex.test(messageText)) {
-                const containsRequiredTexts = requiredTexts.some(text => messageText.includes(text));
-                const containsOnlyIDs = !containsRequiredTexts && /ID\s?\d+\s?/g.test(messageText);
-
-                if (containsRequiredTexts) {
-                    realHIDELISTAs.push(messageText);
-                } else if (containsOnlyIDs) {
-                    fakeHIDELISTAs.push(messageText);
-                }
-            }
-        });
-
-        if (realHIDELISTAs.length > 0) {
-            realIDs = realHIDELISTAs.flatMap(text => Array.from(text.matchAll(/ID\s?([0-9]+)\s?/g)).map(r => r[1]));
-            console.log('Real HIDELISTA detected:', realIDs);
-            chrome.storage.local.set({ postIds: realIDs });
-            hidePosts(realIDs);
-        } else {
-            console.log('No real HIDELISTA found - No action taken - make real one?');
-        }
-
-        if (fakeHIDELISTAs.length > 0) {
-            console.log('Fake HIDELISTA detected:', fakeHIDELISTAs);
-        }
-    })();
+    updateHidelistaCache();
 }
 
 function debounce(func, wait) {
@@ -212,6 +228,10 @@ function debounce(func, wait) {
 }
 
 chrome.runtime.onMessage.addListener(debounce((request, sender, sendResponse) => {
+    if (request.type === 'UPDATE_HIDELISTA_CACHE') {
+        updateHidelistaCache();
+    }
+
     if (request.type === 'TOGGLE_HIGHLIGHT') {
         highlightEnabled = request.enable;
         if (highlightEnabled) {
@@ -225,7 +245,7 @@ chrome.runtime.onMessage.addListener(debounce((request, sender, sendResponse) =>
     if (request.type === 'TOGGLE_HIDE_POSTS') {
         hidePostsEnabled = request.enable;
         postIds = request.ids || [];
-        if (hidePostsEnabled) {
+        if (hidePostsEnabled && window.location.pathname.includes('/sodat/')) {
             hidePosts(postIds);
         } else {
             showPosts(postIds);
