@@ -150,41 +150,81 @@ function scrollToBottom() {
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
 }
 
+//** TESTI HIDELISTA */ */
 function updateHidelistaCache() {
-    const regex = /^#HIDELISTA/;
-    const postMessages = document.querySelectorAll('.post-message');
-    let currentRealIDs = [];
-    const requiredTexts = ["HIDETYSOHJE:", "RYBO", "RYBOT", "HIDETTÄMISEN AVUKSI:", "OHJE:", "#RYBOLISTA"];
-    const realHIDELISTAs = [];
-
-    chrome.storage.local.set({ postIds: [] }, function() {
-        console.log('HIDELISTA cache cleared.');
+    const posts = document.querySelectorAll('.post-message, .post-content');
+    let candidates = [];
+    const markerRegex = /(#hidelista|langan vakiohidet:)/i;
+    const guidance = [
+        "hidetysohje", 
+        "rybo", 
+        "rybot", 
+        "ohje", 
+        "#rybolista", 
+        "muistutus"
+    ];
+    
+    chrome.storage.local.set({ postIds: [] }, () => {
+        console.log("HIDELISTA cache cleared.");
     });
-
-    postMessages.forEach(message => {
-        const messageText = message.textContent.trim();
-
-        if (regex.test(messageText)) {
-            const containsRequiredTexts = requiredTexts.some(text => messageText.includes(text));
-            const containsOnlyIDs = !containsRequiredTexts && /ID\s?\d+\s?/g.test(messageText);
-
-            if (containsRequiredTexts) {
-                realHIDELISTAs.push(messageText);
+    
+    posts.forEach((post, idx) => {
+        const rawText = post.innerText.trim();
+        const lowerText = rawText.toLowerCase();
+        if (markerRegex.test(rawText) && guidance.some(g => lowerText.includes(g))) {
+            let listPart = "";
+            if (rawText.indexOf(':') !== -1) {
+                listPart = rawText.split(/:\s*/).slice(1).join(" ");
+            } else {
+                let lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+                if (lines[0] && markerRegex.test(lines[0])) {
+                    lines.shift();
+                }
+                listPart = lines.join(" ");
+            }
+            listPart = listPart.replace(/\n/g, " ").trim();
+            
+            let numbers = [];
+            if (/ID\s*\d+/i.test(listPart)) {
+                let matches = listPart.match(/ID\s*([0-9]+)/gi);
+                if (matches) {
+                    numbers = matches.map(s => {
+                        let m = s.match(/\d+/);
+                        return m ? parseInt(m[0], 10) : null;
+                    }).filter(n => n !== null);
+                }
+            } else {
+                let nums = listPart.match(/\b\d+\b/g);
+                if (nums) {
+                    numbers = nums.map(n => parseInt(n, 10));
+                }
+            }
+            numbers = numbers.filter(n => n < 1000);
+            
+            console.log(`Post ${idx} -> extracted numbers:`, numbers);
+            if (numbers.length >= 3) {
+                candidates.push({ numbers, idx });
             }
         }
     });
-
-    if (realHIDELISTAs.length > 0) {
-        currentRealIDs = realHIDELISTAs.flatMap(text => Array.from(text.matchAll(/ID\s?([0-9]+)\s?/g)).map(r => r[1]));
-        console.log('Current real HIDELISTA detected:', currentRealIDs);
-        chrome.storage.local.set({ postIds: currentRealIDs }, function() {
-            console.log('HIDELISTA cache updated:', currentRealIDs);
-            hidePosts(currentRealIDs);
+    
+    if (candidates.length > 0) {
+        let bestCandidate = candidates.reduce((prev, curr) => {
+            if (curr.numbers.length > prev.numbers.length) return curr;
+            else if (curr.numbers.length === prev.numbers.length)
+                return (curr.idx < prev.idx ? curr : prev);
+            return prev;
+        });
+        let uniqueNumbers = Array.from(new Set(bestCandidate.numbers)).sort((a, b) => a - b);
+        console.log("Detected HIDELISTA numbers:", uniqueNumbers);
+        chrome.storage.local.set({ postIds: uniqueNumbers.map(String) }, () => {
+            console.log("HIDELISTA cache updated:", uniqueNumbers);
         });
     } else {
-        console.log('No real HIDELISTA found.');
+        console.log("No real HIDELISTA found.");
     }
 }
+//** TESTI HIDELISTA 0.7.7 */
 
 chrome.storage.local.get(['highlightEnabled', 'hidePostsEnabled', 'shoutboxEnabled', 'postIds', 'fakePostIds'], function(data) {
     highlightEnabled = data.highlightEnabled !== undefined ? data.highlightEnabled : true;
