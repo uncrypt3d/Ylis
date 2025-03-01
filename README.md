@@ -21,7 +21,7 @@ Tämän hetkiset toiminnot;
 
 Saa keksiä uusia toimintoja - ja jos kannatat ideaa, anna sille viestille
 "Tää:D" -ääni Ylilaudan langassa;
->https://ylilauta.org/satunnainen/27kgwc
+>https://ylilauta.org/aihevapaa/27wxbz
 
 
 # Asennus;
