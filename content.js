@@ -1,12 +1,28 @@
-//'asetukset'
+// 'asetukset'
 let highlightEnabled = true;
 let hidePostsEnabled = true;
 let shoutboxEnabled = true;
 let postIds = [];
 let fakePostIds = [];
 
-//scriptit
+// vierityspainikkeet
+function createScrollButton(iconClass, onClick, label) {
+    const button = document.createElement("button");
+    button.className = "scroll-button";
+    button.innerHTML = `<span class="${iconClass}">${label}</span>`;
+    button.onclick = onClick;
+    return button;
+}
 
+function scrollToTop() {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function scrollToBottom() {
+    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+}
+
+// Shoutboxin piilotus
 function enableShoutbox() {
     const elements = ['#shoutbox', '#shouts', '#shout-form'];
     elements.forEach(selector => {
@@ -15,9 +31,10 @@ function enableShoutbox() {
             element.style.display = 'none';
         }
     });
-    console.log('Shoutbox hidden');
+    console.log('Shoutbox piilotettu');
 }
 
+// Shoutboxin näyttö
 function disableShoutbox() {
     const elements = ['#shoutbox', '#shouts', '#shout-form'];
     elements.forEach(selector => {
@@ -26,23 +43,26 @@ function disableShoutbox() {
             element.style.display = '';
         }
     });
-    console.log('Shoutbox displayed');
+    console.log('Shoutbox näytetty');
 }
 
+// Viestien piilotus
 function hidePosts(ids) {
     if (window.location.pathname.includes('/sodat/')) {
-        document.querySelectorAll('.post').forEach(post => {
-            const userId = post.getAttribute('data-user-id');
-            if (userId && ids.includes(userId)) {
-                post.style.display = 'none';
-            }
+        chrome.storage.local.get(['hidelistaPostIndex'], function(data) {
+            const skipIdx = data.hidelistaPostIndex;
+            document.querySelectorAll('.post').forEach((post, idx) => {
+                const userId = post.getAttribute('data-user-id');
+                if (idx !== skipIdx && userId && ids.includes(userId)) {
+                    post.style.display = 'none';
+                }
+            });
+            console.log('Posts hidden:', ids);
         });
-        console.log('Posts hidden:', ids);
-    } else {
-        console.log('Not on /sodat/ page, hidePosts skipped');
     }
 }
 
+// Viestien näyttäminen
 function showPosts(ids) {
     if (window.location.pathname.includes('/sodat/')) {
         document.querySelectorAll('.post').forEach(post => {
@@ -51,17 +71,16 @@ function showPosts(ids) {
                 post.style.display = '';
             }
         });
-        console.log('Posts shown:', ids);
-    } else {
-        console.log('Not on /sodat/ page, showPosts skipped');
+        console.log('Viestit näytetty:', ids);
     }
 }
 
+// Viestien korostus
 function applyPostHighlighting() {
     const baseURL = 'https://ylilauta.org/sodat/';
     if (window.location.href.startsWith(baseURL)) {
         const config = { upvoteThreshold: 5 };
-        function processPost(post) {
+        document.querySelectorAll(".post").forEach(post => {
             const upvoteElement = post.querySelector(".post-button .post-upvotes");
             if (upvoteElement) {
                 const upvoteCount = parseInt(upvoteElement.textContent);
@@ -70,20 +89,21 @@ function applyPostHighlighting() {
                     post.style.backgroundColor = "rgba(0, 255, 0, 0.1)";
                 }
             }
-        }
-        document.querySelectorAll(".post").forEach(processPost);
+        });
+        console.log('Korostus käytössä');
     }
-    console.log('Highlighting enabled');
 }
 
+// Korostuksen poisto
 function removePostHighlighting() {
     document.querySelectorAll(".post").forEach(post => {
         post.style.border = '';
         post.style.backgroundColor = '';
     });
-    console.log('Highlighting disabled');
+    console.log('Korostus pois käytöstä');
 }
 
+// Poista vanhat CSS-säännöt, jotka piilottavat kultapainikkeen
 function removeCSSRules() {
     const stylesheets = document.styleSheets;
 
@@ -101,15 +121,18 @@ function removeCSSRules() {
                 }
             }
         } catch (e) {
-            console.error("Unable to modify stylesheet:", e);
+            console.error("Tyylisääntöjä ei voitu muokata:", e);
         }
     });
 }
 
 removeCSSRules();
 
+// Korvaa kultapainike vierityspainikkeilla
 function replaceGoldBuyButtons() {
-    const targetButtons = document.querySelectorAll('.button.button-gold-buy');
+    const targetButtons = document.querySelectorAll(
+        '.button.button-gold-buy, a.button.gold-button'
+    );
 
     targetButtons.forEach(buttonElement => {
         buttonElement.removeAttribute('onclick');
@@ -124,7 +147,6 @@ function replaceGoldBuyButtons() {
 
         const buttonContainer = document.createElement('div');
         buttonContainer.className = 'scroll-button-container';
-
         buttonContainer.appendChild(createScrollButton('icon-enter-up2', scrollToTop, 'Ylös'));
         buttonContainer.appendChild(createScrollButton('icon-enter-down2', scrollToBottom, 'Alas'));
 
@@ -132,167 +154,150 @@ function replaceGoldBuyButtons() {
     });
 }
 
-replaceGoldBuyButtons();
-
-function createScrollButton(iconClass, scrollFunction, title) {
-    const button = document.createElement('button');
-    button.className = `scroll-button ${iconClass}`;
-    button.title = title;
-    button.addEventListener('click', scrollFunction);
-    return button;
-}
-
-function scrollToTop() {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function scrollToBottom() {
-    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-}
-
-//** TESTI HIDELISTA */ */
+// Hidelistan hakuviestien perusteella
 function updateHidelistaCache() {
     const posts = document.querySelectorAll('.post-message, .post-content');
     let candidates = [];
-    const markerRegex = /(#hidelista|langan vakiohidet:)/i;
-    const guidance = [
-        "hidetysohje", 
-        "rybo", 
-        "rybot", 
-        "ohje", 
-        "#rybolista", 
-        "muistutus"
-    ];
-    
+    const markerRegex = /#hidelista/i;
+    const guidanceKeywords = ["hidetysohje", "rybo", "rybot", "ohje", "#rybolista", "muistutus"];
+    const minLength = 100; 
+
+    // Tyhjennetään aiemmat id:t välittömästi, että piilotus toimii heti
+    postIds = [];
     chrome.storage.local.set({ postIds: [] }, () => {
-        console.log("HIDELISTA cache cleared.");
+        console.log("HIDELISTA välimuisti tyhjennetty.");
     });
-    
+
     posts.forEach((post, idx) => {
         const rawText = post.innerText.trim();
         const lowerText = rawText.toLowerCase();
-        if (markerRegex.test(rawText) && guidance.some(g => lowerText.includes(g))) {
-            let listPart = "";
-            if (rawText.indexOf(':') !== -1) {
-                listPart = rawText.split(/:\s*/).slice(1).join(" ");
-            } else {
+
+        if (rawText.length < minLength) return;
+
+        if (markerRegex.test(rawText)) {
+            // Vanha tyyli: etsitään "ID x" -numerot
+            const oldStyleIds = [];
+            const idMatches = rawText.matchAll(/ID\s?(\d+)/gi);
+            for (const match of idMatches) {
+                oldStyleIds.push(parseInt(match[1], 10));
+            }
+
+            if (oldStyleIds.length > 0) {
+                if (!oldStyleIds.includes(1)) oldStyleIds.push(1);
+                oldStyleIds.sort((a, b) => a - b);
+                candidates.push({ numbers: oldStyleIds, idx });
+                return;
+            }
+
+            // Uusi tyyli: ohjetekstin sisältö ja rivien numerot
+            if (guidanceKeywords.filter(g => lowerText.includes(g)).length >= 2) {
                 let lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
-                if (lines[0] && markerRegex.test(lines[0])) {
-                    lines.shift();
+                if (markerRegex.test(lines[0])) lines.shift();
+
+                let numbers = [];
+                for (const line of lines) {
+                    let cleanedLine = line.replace(/\([^)]*\)/g, '').trim();
+                    if (/^\d+$/.test(cleanedLine)) numbers.push(parseInt(cleanedLine, 10));
                 }
-                listPart = lines.join(" ");
-            }
-            listPart = listPart.replace(/\n/g, " ").trim();
-            
-            let numbers = [];
-            if (/ID\s*\d+/i.test(listPart)) {
-                let matches = listPart.match(/ID\s*([0-9]+)/gi);
-                if (matches) {
-                    numbers = matches.map(s => {
-                        let m = s.match(/\d+/);
-                        return m ? parseInt(m[0], 10) : null;
-                    }).filter(n => n !== null);
-                }
-            } else {
-                let nums = listPart.match(/\b\d+\b/g);
-                if (nums) {
-                    numbers = nums.map(n => parseInt(n, 10));
-                }
-            }
-            numbers = numbers.filter(n => n < 1000);
-            
-            console.log(`Post ${idx} -> extracted numbers:`, numbers);
-            if (numbers.length >= 3) {
-                candidates.push({ numbers, idx });
+                numbers = numbers.filter(n => n < 1000);
+
+                if (numbers.length >= 3) candidates.push({ numbers, idx });
             }
         }
     });
-    
+
     if (candidates.length > 0) {
         let bestCandidate = candidates.reduce((prev, curr) => {
             if (curr.numbers.length > prev.numbers.length) return curr;
-            else if (curr.numbers.length === prev.numbers.length)
+            if (curr.numbers.length === prev.numbers.length)
                 return (curr.idx < prev.idx ? curr : prev);
             return prev;
         });
+
         let uniqueNumbers = Array.from(new Set(bestCandidate.numbers)).sort((a, b) => a - b);
-        console.log("Detected HIDELISTA numbers:", uniqueNumbers);
-        chrome.storage.local.set({ postIds: uniqueNumbers.map(String) }, () => {
-            console.log("HIDELISTA cache updated:", uniqueNumbers);
+
+        postIds = uniqueNumbers.map(String);
+
+        chrome.storage.local.set({
+            postIds,
+            hidelistaPostIndex: bestCandidate.idx
+        }, () => {
+            console.log("HIDELISTA välimuisti päivitetty:", postIds);
+            if (hidePostsEnabled && window.location.pathname.includes('/sodat/')) {
+                hidePosts(postIds);
+            }
         });
     } else {
-        console.log("No real HIDELISTA found.");
+        console.log("HIDELISTA-viestiä ei löytynyt.");
+        postIds = [];
+        chrome.storage.local.set({ postIds: [] });
+        if (window.location.pathname.includes('/sodat/')) {
+            showPosts(postIds);
+        }
     }
 }
-//** TESTI HIDELISTA 0.7.7 */
 
-chrome.storage.local.get(['highlightEnabled', 'hidePostsEnabled', 'shoutboxEnabled', 'postIds', 'fakePostIds'], function(data) {
-    highlightEnabled = data.highlightEnabled !== undefined ? data.highlightEnabled : true;
-    hidePostsEnabled = data.hidePostsEnabled !== undefined ? data.hidePostsEnabled : true;
-    shoutboxEnabled = data.shoutboxEnabled !== undefined ? data.shoutboxEnabled : true;
-    postIds = data.postIds || [];
-    fakePostIds = data.fakePostIds || [];
+// Yläotsikko /sodat/-sivulle tilatiedoilla
+function insertStatusHeader() {
+    if (!window.location.pathname.includes('/sodat/')) return;
 
+    chrome.storage.local.get(['highlightEnabled', 'hidePostsEnabled', 'shoutboxEnabled'], function(data) {
+        const highlightEnabled = data.highlightEnabled !== undefined ? data.highlightEnabled : true;
+        const hidePostsEnabled = data.hidePostsEnabled !== undefined ? data.hidePostsEnabled : true;
+        const shoutboxEnabled = data.shoutboxEnabled !== undefined ? data.shoutboxEnabled : true;
+
+        const header = document.createElement('h2');
+        header.style.fontSize = '1.2rem';
+        header.style.margin = '10px';
+        header.style.padding = '10px';
+        header.style.border = '2px solid #ccc';
+        header.style.borderRadius = '8px';
+        header.style.background = '#f5f5f5';
+        header.style.color = '#333';
+        header.style.textAlign = 'center';
+        header.style.fontFamily = 'sans-serif';
+        header.innerHTML = `
+            <span>${highlightEnabled ? '✅ Korostus käytössä' : '❌ Korostus pois'}</span> |
+            <span>${hidePostsEnabled ? '✅ Piilotus käytössä' : '❌ Piilotus pois'}</span> |
+            <span>${shoutboxEnabled ? '✅ Shoutbox käytössä' : '❌ Shoutbox pois'}</span>
+        `;
+
+        document.body.insertBefore(header, document.body.firstChild);
+    });
+}
+
+// PÄÄSUORITUS
+
+// Alustetaan tilat local storagesta
+chrome.storage.local.get(['highlightEnabled', 'hidePostsEnabled', 'shoutboxEnabled', 'postIds'], function(data) {
+    if (data.highlightEnabled !== undefined) highlightEnabled = data.highlightEnabled;
+    if (data.hidePostsEnabled !== undefined) hidePostsEnabled = data.hidePostsEnabled;
+    if (data.shoutboxEnabled !== undefined) shoutboxEnabled = data.shoutboxEnabled;
+    if (data.postIds !== undefined) postIds = data.postIds;
+
+    // Suorita asetusten mukaiset toimenpiteet
     if (highlightEnabled) {
         applyPostHighlighting();
+    } else {
+        removePostHighlighting();
     }
 
-    if (hidePostsEnabled && window.location.pathname.includes('/sodat/')) {
+    if (hidePostsEnabled) {
         hidePosts(postIds);
+    } else {
+        showPosts(postIds);
     }
 
-    if (shoutboxEnabled) {
+    if (!shoutboxEnabled) {
         enableShoutbox();
     } else {
         disableShoutbox();
     }
+
+    insertStatusHeader();
+    replaceGoldBuyButtons();
+    updateHidelistaCache();
 });
 
-if (window.location.pathname.includes('/sodat/')) {
-    updateHidelistaCache();
-}
-
-function debounce(func, wait) {
-    let timeout;
-    return function(...args) {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => func.apply(this, args), wait);
-    };
-}
-
-chrome.runtime.onMessage.addListener(debounce((request, sender, sendResponse) => {
-    if (request.type === 'UPDATE_HIDELISTA_CACHE') {
-        updateHidelistaCache();
-    }
-
-    if (request.type === 'TOGGLE_HIGHLIGHT') {
-        highlightEnabled = request.enable;
-        if (highlightEnabled) {
-            applyPostHighlighting();
-        } else {
-            removePostHighlighting();
-        }
-        chrome.storage.local.set({ highlightEnabled });
-    }
-
-    if (request.type === 'TOGGLE_HIDE_POSTS') {
-        hidePostsEnabled = request.enable;
-        postIds = request.ids || [];
-        if (hidePostsEnabled && window.location.pathname.includes('/sodat/')) {
-            hidePosts(postIds);
-        } else {
-            showPosts(postIds);
-        }
-        chrome.storage.local.set({ hidePostsEnabled, postIds });
-    }
-
-    if (request.type === 'TOGGLE_SHOUTBOX') {
-        shoutboxEnabled = request.enable;
-        if (shoutboxEnabled) {
-            enableShoutbox();
-        } else {
-            disableShoutbox();
-        }
-        chrome.storage.local.set({ shoutboxEnabled });
-    }
-}, 300));
+// Pidä hidelista päivityksissä esim. 5 minuutin välein
+setInterval(updateHidelistaCache, 5 * 60 * 1000);
